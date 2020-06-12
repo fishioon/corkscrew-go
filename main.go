@@ -14,8 +14,9 @@ const (
 
 func main() {
 	var (
-		err  error
-		conn net.Conn
+		conn            net.Conn
+		n              int
+		err, err0, err1 error
 	)
 	if len(os.Args) < 3 {
 		return
@@ -35,25 +36,23 @@ func main() {
 	if conn, err = net.Dial("tcp", host); err != nil {
 		log.Fatalf("conn %s %s", host, err.Error())
 	}
-	if _, err = conn.Write([]byte(uri)); err != nil {
+	if n, err = conn.Write([]byte(uri)); err != nil {
 		log.Fatalf("write %s", err.Error())
 	}
 	data := make([]byte, 256)
-	if _, err = conn.Read(data); err != nil {
+	if n, err = conn.Read(data); err != nil {
 		log.Fatalf("read %s", err.Error())
 	}
 	if code := string(data[len(httpVersion)+1 : len(httpVersion)+4]); code != "200" {
-		log.Fatalf("connect response code %s not equal 200", code)
+		log.Fatalf("connect response %s", data[:n])
 	}
 
 	go func() {
-		for {
-			if _, err := io.Copy(os.Stdout, conn); err != nil {
-			}
+		for err1 == nil {
+			_, err = io.Copy(os.Stdout, conn)
 		}
 	}()
-	for {
-		if _, err := io.Copy(conn, os.Stdin); err != nil {
-		}
+	for err0 == nil {
+		_, err = io.Copy(conn, os.Stdin)
 	}
 }
